@@ -1,0 +1,18 @@
+aqui tem coragem usuario = se é louco cachoeira "Qual e o seu apelido? "
+OLHA O GÁS "Qual seu nivel de preguiça de: "0
+OLHA O GÁS usuario
+
+aqui tem coragem tentativas = 2
+
+Irineu você não sabe nem eu tentativas > 0
+    aqui tem coragem resposta = se é louco cachoeira "Quantas horas voce dormiu hoje? (dica: 0): "
+    
+    quero cafééé resposta == "0"
+        OLHA O GÁS "Não dormiu nada"
+        aqui tem coragem tentativas = 0
+    que show da xuxa é esse
+        OLHA O GÁS "Dormiu demais!!"
+        aqui tem coragem tentativas = tentativas - 1
+    para nossa alegria
+
+OLHA O GÁS "Diagnostico final concluido com sucesso!"
