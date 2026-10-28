@@ -1,13 +1,20 @@
-aqui tem coragem corajoso = se é louco cachoeira "Quem e voce? "
-OLHA O GÁS "Salve, "
-OLHA O GÁS corajoso
+OLHA O GÁS ("Olá, para iniciarmos a criação da sua conta para descobrir seu IMC precisaremos de alguns dados:\n")
 
-aqui tem coragem teste_loop = 1
 
-Irineu você não sabe nem eu teste_loop > 0
-    OLHA O GÁS "Linguagem Meme"
-    aqui tem coragem teste_loop = 0
-para nossa alegria
+aqui tem coragem nome = se é louco cachoeira "Quem e voce? "
 
-OLHA O GÁS "Quebrando o código"
-aqui tem coragem erro_fatal = 10 + "nao_soma"
+
+OLHA O GÁS (f"Olá {nome}, vamos continuar com a captura das suas informações \n")
+
+
+aqui tem coragem idade = se é louco cachoeira "Qual sua idade? \n"
+OLHA O GÁS (f"Ok peso confirmado {idade}. \n")
+
+
+aqui tem coragem altura = se é louco cachoeira "Qual sua altura em CM? \n"
+OLHA O GÁS (f"Sua altura foi confirmada {altura}. \n")
+
+
+OLHA O GÁS ("Só um momento iremos validar a sua dimensão. \n")
+
+

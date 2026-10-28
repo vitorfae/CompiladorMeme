@@ -44,21 +44,21 @@ def rodar_interpretador(nome_arquivo):
         if "para nossa alegria" in linha_tratada:
             linha_tratada = "pass"
 
-        # laço de repetição: Irineu você não sabe nem eu -> while ...:
+       
         if "Irineu você não sabe nem eu" in linha_tratada:
             condicao = linha_tratada.replace("Irineu você não sabe nem eu", "").strip()
             linha_tratada = f"while {condicao}:"
 
-        # Preserva a indentação original do arquivo meme
+        
         espacos_iniciais = len(linha) - len(linha.lstrip())
         indentacao = " " * espacos_iniciais
         
         codigo_python.append(indentacao + linha_tratada + "\n")
 
-    # Junta todo o código traduzido
+  
     script_para_rodar = "".join(codigo_python)
 
-    # Bloco principal com tratamento de erro alinhado ao dicionário
+   
     try:
         ambiente_global = {}
         exec(script_para_rodar, ambiente_global)
