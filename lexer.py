@@ -1,3 +1,8 @@
+"""Lexer da linguagem Meme.
+
+Transforma o texto de um arquivo .meme em uma lista de tokens.
+Uso:  python lexer.py arquivo.meme
+"""
 import re
 import sys
 import unicodedata
@@ -5,6 +10,7 @@ from dataclasses import dataclass
 
 
 class LexerError(Exception):
+
     def __init__(self, mensagem, linha, coluna):
         super().__init__(f"linha {linha}, coluna {coluna}: {mensagem}")
         self.linha = linha
@@ -13,6 +19,7 @@ class LexerError(Exception):
 
 @dataclass(frozen=True)
 class Token:
+
     tipo: str
     valor: object
     linha: int
@@ -22,8 +29,8 @@ class Token:
         return f"{self.linha}:{self.coluna:<3} {self.tipo:<8} {self.valor!r}"
 
 
-# Frases-meme -> tipo do token. Cada frase vira somente um token.
-FRASES = {
+# frases da linguagem -> tipo do token. Cada frase vira somente um token.
+FRASES_MEME = {
     "OLHA O GÁS": "PRINT",
     "se é louco cachoeira": "INPUT",
     "aqui tem coragem": "LET",
@@ -33,150 +40,194 @@ FRASES = {
     "Irineu você não sabe nem eu": "WHILE",
 }
 
-# Palavras simples reservadas (vindas do Python, usadas nas expressões).
-PALAVRAS = {
-    "and": "AND",
-    "or": "OR",
-    "not": "NOT",
-    "True": "TRUE",
-    "False": "FALSE",
-    "None": "NONE",
+# palavras reservadas simples, usadas nas expressões.
+PALAVRAS_RESERVADAS = {
+    "and": "AND", "or": "OR", "not": "NOT",
+    "True": "TRUE", "False": "FALSE", "None": "NONE",
 }
 
-# Operadores: os de 2 caracteres vêm antes para ganhar dos de 1.
 OPERADORES = {
-    "==": "EQ", "!=": "NE", "<=": "LE", ">=": "GE",
-    "//": "FLOORDIV", "**": "POW",
-    "<": "LT", ">": "GT", "=": "ASSIGN",
-    "+": "PLUS", "-": "MINUS", "*": "STAR", "/": "SLASH", "%": "MOD",
-    "(": "LPAREN", ")": "RPAREN", ",": "COMMA", "[": "LBRACKET",
-    "]": "RBRACKET", ".": "DOT", ":": "COLON",
+    # comparação
+    "==": "EQ", "!=": "NE", "<=": "LE", ">=": "GE", "<": "LT", ">": "GT",
+    
+    # atribuição
+    "=": "ASSIGN",
+    
+    # aritmética
+    "+": "PLUS", "-": "MINUS", "*": "STAR", "/": "SLASH",
+    "//": "FLOORDIV", "%": "MOD", "**": "POW",
+    
+    # pontuação
+    "(": "LPAREN", ")": "RPAREN", "[": "LBRACKET", "]": "RBRACKET",
+    ",": "COMMA", ".": "DOT", ":": "COLON",
 }
 
-
-def _montar_regex_frases():
-    # Mais longas primeiro; espaços na frase aceitam qualquer quantidade de
-    # espaços; (?!\w) impede casar o começo de uma palavra maior.
-    frases = sorted(FRASES, key=len, reverse=True)
-    alternativas = [r"\s+".join(map(re.escape, f.split())) for f in frases]
-    return re.compile("(?:" + "|".join(alternativas) + r")(?!\w)")
-
-
-RE_FRASE = _montar_regex_frases()
-RE_IDENT = re.compile(r"[^\W\d]\w*")
-RE_NUMERO = re.compile(r"\d+(?:\.\d+)?")
-RE_OP = re.compile(
-    "|".join(map(re.escape, sorted(OPERADORES, key=len, reverse=True)))
-)
-RE_ESPACO = re.compile(r"[ \t]+")
-
+# escapes aceitos dentro de strings, como "\n".
 ESCAPES = {"n": "\n", "t": "\t", "\\": "\\", '"': '"', "'": "'", "0": "\0"}
 
 
-def _ler_string(linha_txt, pos, n_linha, prefixo_f):
-    """Lê uma string começando na aspa em `pos`. Devolve (valor, nova_pos)."""
-    aspa = linha_txt[pos]
-    i = pos + 1
-    partes = []
-    while i < len(linha_txt):
-        c = linha_txt[i]
-        if c == aspa:
-            return "".join(partes), i + 1
-        if c == "\\" and i + 1 < len(linha_txt):
-            prox = linha_txt[i + 1]
-            # Em f-string o texto é mantido cru; quem avalia decide depois.
-            partes.append("\\" + prox if prefixo_f else ESCAPES.get(prox, prox))
-            i += 2
+def _montar_regex_frases():
+    """Regex que reconhece qualquer frase-meme.
+
+    Testa as frases mais longas primeiro, aceita vários espaços entre as
+    palavras e não casa se a frase for o começo de uma palavra maior.
+    """
+    frases = sorted(FRASES_MEME, key=len, reverse=True)
+    alternativas = []
+    for frase in frases:
+        palavras = [re.escape(palavra) for palavra in frase.split()]
+        alternativas.append(r"\s+".join(palavras))
+    return re.compile("(?:" + "|".join(alternativas) + r")(?!\w)")
+
+
+# operadores mais longos primeiro, para "==" não virar dois "=".
+_operadores_ordenados = sorted(OPERADORES, key=len, reverse=True)
+
+RE_FRASE = _montar_regex_frases()
+RE_OPERADOR = re.compile("|".join(map(re.escape, _operadores_ordenados)))
+RE_IDENTIFICADOR = re.compile(r"[^\W\d]\w*")
+RE_NUMERO = re.compile(r"\d+(?:\.\d+)?")
+RE_ESPACO = re.compile(r"[ \t]+")
+
+
+def _ler_string(texto_linha, posicao_aspa, numero_linha, eh_fstring):
+    """Lê uma string que começa na aspa em `posicao_aspa`.
+
+    Devolve (conteudo, posicao_depois_da_string).
+    """
+    aspa = texto_linha[posicao_aspa]
+    posicao = posicao_aspa + 1
+    caracteres = []
+
+    while posicao < len(texto_linha):
+        caractere = texto_linha[posicao]
+
+        if caractere == aspa:
+            return "".join(caracteres), posicao + 1
+
+        if caractere == "\\" and posicao + 1 < len(texto_linha):
+            proximo = texto_linha[posicao + 1]
+            if eh_fstring:
+                # Em f-string o escape fica cru; quem avalia decide depois.
+                caracteres.append("\\" + proximo)
+            else:
+                caracteres.append(ESCAPES.get(proximo, proximo))
+            posicao += 2
             continue
-        partes.append(c)
-        i += 1
-    raise LexerError("string sem aspas de fechamento", n_linha, pos + 1)
+
+        caracteres.append(caractere)
+        posicao += 1
+
+    raise LexerError("string sem aspas de fechamento", numero_linha, posicao_aspa + 1)
 
 
 def tokenizar(codigo):
+    """Transforma o código .meme em uma lista de tokens."""
+    # garante que letras acentuadas (é, Á) tenham sempre a mesma forma.
     codigo = unicodedata.normalize("NFC", codigo)
     tokens = []
-    pilha_indent = [0]
+    niveis_indentacao = [0]  # níveis dos blocos abertos
 
-    for n_linha, linha in enumerate(codigo.splitlines(), start=1):
-        sem_indent = linha.lstrip(" \t")
-        # Linha vazia ou só comentário: ignora.
-        if not sem_indent.strip() or sem_indent.lstrip().startswith("#"):
+    for numero_linha, texto_linha in enumerate(codigo.splitlines(), start=1):
+
+        # --- 1. ignora linhas vazias e linhas só com comentário
+        sem_indentacao = texto_linha.lstrip(" \t")
+        conteudo = sem_indentacao.strip()
+        if not conteudo or conteudo.startswith("#"):
             continue
 
-        if "\t" in linha[: len(linha) - len(sem_indent)]:
-            raise LexerError("use espaços (não tabs) para indentar", n_linha, 1)
+        # --- 2. mede a indentação e gera INDENT / DEDENT
+        tamanho_indentacao = len(texto_linha) - len(sem_indentacao)
+        if "\t" in texto_linha[:tamanho_indentacao]:
+            raise LexerError("use espaços (não tabs) para indentar", numero_linha, 1)
 
-        # --- indentação -> INDENT / DEDENT
-        indent = len(linha) - len(sem_indent)
-        if indent > pilha_indent[-1]:
-            pilha_indent.append(indent)
-            tokens.append(Token("INDENT", indent, n_linha, 1))
+        if tamanho_indentacao > niveis_indentacao[-1]:
+            niveis_indentacao.append(tamanho_indentacao)
+            tokens.append(Token("INDENT", tamanho_indentacao, numero_linha, 1))
         else:
-            while indent < pilha_indent[-1]:
-                pilha_indent.pop()
-                tokens.append(Token("DEDENT", indent, n_linha, 1))
-            if indent != pilha_indent[-1]:
-                raise LexerError("indentação inconsistente", n_linha, 1)
+            while tamanho_indentacao < niveis_indentacao[-1]:
+                niveis_indentacao.pop()
+                tokens.append(Token("DEDENT", tamanho_indentacao, numero_linha, 1))
+            if tamanho_indentacao != niveis_indentacao[-1]:
+                raise LexerError("indentação inconsistente", numero_linha, 1)
 
-        # --- tokens da linha
-        pos = indent
-        while pos < len(linha):
-            if m := RE_ESPACO.match(linha, pos):
-                pos = m.end()
+        # --- 3. lê os tokens da linha, da esquerda para a direita
+        posicao = tamanho_indentacao
+        while posicao < len(texto_linha):
+            espacos = RE_ESPACO.match(texto_linha, posicao)
+            if espacos:
+                posicao = espacos.end()
                 continue
-            col = pos + 1
-            c = linha[pos]
 
-            if c == "#":  # comentário até o fim da linha
+            coluna = posicao + 1
+            caractere = texto_linha[posicao]
+
+            # comentário
+            if caractere == "#":
                 break
 
-            if m := RE_FRASE.match(linha, pos):
-                frase = " ".join(m.group().split())
-                tokens.append(Token(FRASES[frase], frase, n_linha, col))
-                pos = m.end()
+            # frases (OLHA O GÁS, quero cafééé, ...)
+            achou_frase = RE_FRASE.match(texto_linha, posicao)
+            if achou_frase:
+                frase = " ".join(achou_frase.group().split())
+                tokens.append(Token(FRASES_MEME[frase], frase, numero_linha, coluna))
+                posicao = achou_frase.end()
                 continue
 
-            # f"..." (prefixo f/F colado na aspa)
-            if c in "fF" and pos + 1 < len(linha) and linha[pos + 1] in "\"'":
-                valor, pos = _ler_string(linha, pos + 1, n_linha, True)
-                tokens.append(Token("FSTRING", valor, n_linha, col))
+            # f-string: f"Olá {nome}"
+            proximo = texto_linha[posicao + 1 : posicao + 2]
+            if caractere in "fF" and proximo in ("\"", "'"):
+                valor, posicao = _ler_string(texto_linha, posicao + 1, numero_linha, True)
+                tokens.append(Token("FSTRING", valor, numero_linha, coluna))
                 continue
 
-            if c in "\"'":
-                valor, pos = _ler_string(linha, pos, n_linha, False)
-                tokens.append(Token("STRING", valor, n_linha, col))
+            # string normal: "texto" ou 'texto'
+            if caractere in "\"'":
+                valor, posicao = _ler_string(texto_linha, posicao, numero_linha, False)
+                tokens.append(Token("STRING", valor, numero_linha, coluna))
                 continue
 
-            if m := RE_NUMERO.match(linha, pos):
-                txt = m.group()
-                valor = float(txt) if "." in txt else int(txt)
-                tokens.append(Token("NUMBER", valor, n_linha, col))
-                pos = m.end()
+            # número
+            achou_numero = RE_NUMERO.match(texto_linha, posicao)
+            if achou_numero:
+                texto_numero = achou_numero.group()
+                if "." in texto_numero:
+                    valor = float(texto_numero)
+                else:
+                    valor = int(texto_numero)
+                tokens.append(Token("NUMBER", valor, numero_linha, coluna))
+                posicao = achou_numero.end()
                 continue
 
-            if m := RE_IDENT.match(linha, pos):
-                txt = m.group()
-                tipo = PALAVRAS.get(txt, "IDENT")
-                tokens.append(Token(tipo, txt, n_linha, col))
-                pos = m.end()
+            # nome de variável ou palavra reservada
+            achou_nome = RE_IDENTIFICADOR.match(texto_linha, posicao)
+            if achou_nome:
+                nome = achou_nome.group()
+                tipo = PALAVRAS_RESERVADAS.get(nome, "IDENT")
+                tokens.append(Token(tipo, nome, numero_linha, coluna))
+                posicao = achou_nome.end()
                 continue
 
-            if m := RE_OP.match(linha, pos):
-                tokens.append(Token(OPERADORES[m.group()], m.group(), n_linha, col))
-                pos = m.end()
+            # operadores: ==, +, (, ...
+            achou_operador = RE_OPERADOR.match(texto_linha, posicao)
+            if achou_operador:
+                operador = achou_operador.group()
+                tokens.append(Token(OPERADORES[operador], operador, numero_linha, coluna))
+                posicao = achou_operador.end()
                 continue
 
-            raise LexerError(f"caractere inesperado {c!r}", n_linha, col)
+            raise LexerError(f"caractere inesperado {caractere!r}", numero_linha, coluna)
 
-        tokens.append(Token("NEWLINE", "\\n", n_linha, len(linha) + 1))
+        # --- 4. marca o fim da linha
+        tokens.append(Token("NEWLINE", "\\n", numero_linha, len(texto_linha) + 1))
 
-    # fecha os blocos que ficaram abertos no fim do arquivo
-    ultima = tokens[-1].linha if tokens else 1
-    while len(pilha_indent) > 1:
-        pilha_indent.pop()
-        tokens.append(Token("DEDENT", 0, ultima, 1))
-    tokens.append(Token("EOF", None, ultima, 1))
+    # --- 5. mecha os blocos abertos e marca o fim do arquivo
+    ultima_linha = tokens[-1].linha if tokens else 1
+    while len(niveis_indentacao) > 1:
+        niveis_indentacao.pop()
+        tokens.append(Token("DEDENT", 0, ultima_linha, 1))
+    tokens.append(Token("EOF", None, ultima_linha, 1))
+
     return tokens
 
 
@@ -184,11 +235,13 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Uso: python lexer.py arquivo.meme")
         sys.exit(1)
+
+    nome_arquivo = sys.argv[1]
     try:
-        with open(sys.argv[1], encoding="utf-8") as f:
-            for t in tokenizar(f.read()):
-                print(t)
+        with open(nome_arquivo, encoding="utf-8") as arquivo:
+            for token in tokenizar(arquivo.read()):
+                print(token)
     except FileNotFoundError:
-        print(f"o meu amor não fique triste: '{sys.argv[1]}' não foi encontrado.")
-    except LexerError as e:
-        print(f"o meu amor não fique triste: {e}")
+        print(f"o meu amor não fique triste: '{nome_arquivo}' não foi encontrado.")
+    except LexerError as erro:
+        print(f"o meu amor não fique triste: {erro}")
