@@ -1,20 +1,48 @@
-OLHA O GÁS ("Olá, para iniciarmos a criação da sua conta para descobrir seu IMC precisaremos de alguns dados:\n")
+OLHA O GÁS "=== Calculadora de IMC segundo a OMS ==="
 
+aqui tem coragem nome = se é louco cachoeira "Qual e o seu nome? "
+OLHA O GÁS f"Ola {nome}! Vamos calcular o seu IMC."
 
-aqui tem coragem nome = se é louco cachoeira "Quem e voce? "
+aqui tem coragem peso = se é louco cachoeira "Qual seu peso em KG? (ex: 70.5): "
+aqui tem coragem altura = se é louco cachoeira "Qual sua altura em CM? (ex: 175): "
 
+# converte altura de CM para metros e calcula o IMC
+aqui tem coragem altura_m = float(altura) / 100
+aqui tem coragem imc = float(peso) / (altura_m ** 2)
+aqui tem coragem imc = round(imc, 2)
 
-OLHA O GÁS (f"Olá {nome}, vamos continuar com a captura das suas informações \n")
+OLHA O GÁS f"Seu IMC calculado e: {imc}"
+OLHA O GÁS "Classificando de acordo com a Organizacao Mundial da Saude (OMS)..."
 
+# Faixas de IMC da OMS:
+# < 18.5              → Abaixo do peso
+# 18.5 até < 25.0     → Peso normal
+# 25.0 até < 30.0     → Sobrepeso
+# 30.0 até < 35.0     → Obesidade Grau I
+# 35.0 até < 40.0     → Obesidade Grau II
+# >= 40.0             → Obesidade Grau III (Morbida)
 
-aqui tem coragem idade = se é louco cachoeira "Qual sua idade? \n"
-OLHA O GÁS (f"Ok peso confirmado {idade}. \n")
+quero cafééé imc < 18.5
+    OLHA O GÁS "Classificacao: Abaixo do peso"
+    OLHA O GÁS "Recomendacao: Procure um nutricionista para ganho de peso saudavel."
+que show da xuxa é esse
+    quero cafééé imc < 25.0
+        OLHA O GÁS "Classificacao: Peso normal"
+        OLHA O GÁS "Recomendacao: Parabens! Continue com seus habitos saudaveis."
+    que show da xuxa é esse
+        quero cafééé imc < 30.0
+            OLHA O GÁS "Classificacao: Sobrepeso"
+            OLHA O GÁS "Recomendacao: Atencao a alimentacao e pratique atividades fisicas."
+        que show da xuxa é esse
+            quero cafééé imc < 35.0
+                OLHA O GÁS "Classificacao: Obesidade Grau I"
+                OLHA O GÁS "Recomendacao: Consulte um medico para acompanhamento."
+            que show da xuxa é esse
+                quero cafééé imc < 40.0
+                    OLHA O GÁS "Classificacao: Obesidade Grau II"
+                    OLHA O GÁS "Recomendacao: Acompanhamento medico urgente e necessario."
+                que show da xuxa é esse
+                    OLHA O GÁS "Classificacao: Obesidade Grau III (Morbida)"
+                    OLHA O GÁS "Recomendacao: Intervencao medica imediata. Procure um especialista."
 
-
-aqui tem coragem altura = se é louco cachoeira "Qual sua altura em CM? \n"
-OLHA O GÁS (f"Sua altura foi confirmada {altura}. \n")
-
-
-OLHA O GÁS ("Só um momento iremos validar a sua dimensão. \n")
-
-
+OLHA O GÁS f"Obrigado {nome}! Lembre-se: consulte sempre um profissional de saude."
