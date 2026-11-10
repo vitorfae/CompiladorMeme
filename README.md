@@ -68,7 +68,7 @@ O interpretador atual é um tradutor: troca as frases-meme por código Python e 
 ## Roteiro
 
 - [x] Interpretador por tradução para Python
-- [ ] Lexer (`lexer.py`)
+- [X] Lexer (`lexer.py`)
 - [ ] Parser que gera uma árvore sintática (AST)
 - [ ] Avaliador próprio, sem `exec`
 - [ ] Erros com a linha do `.meme`
