@@ -84,3 +84,23 @@ if __name__ == "__main__":
 #laço de repetição: Irineu você não sabe nem eu
 
 #entrada de dados: se é louco cachoeira 
+
+# | Token                                      | Vem de                          |
+# |--------------------------------------------|---------------------------------|
+# | `PRINT`                                    | `OLHA O GÁS`                    |
+# | `INPUT`                                    | `se é louco cachoeira`          |
+# | `LET`                                      | `aqui tem coragem`              |
+# | `IF`                                       | `quero cafééé`                  |
+# | `ELSE`                                     | `que show da xuxa é esse`       |
+# | `END`                                      | `para nossa alegria`            |
+# | `WHILE`                                    | `Irineu você não sabe nem eu`   |
+# | `IDENT`                                    | nomes: `usuario`, `int`         |
+# | `NUMBER`, `STRING`, `FSTRING`              | `42`, `"oi"`, `f"Olá {nome}"`   |
+# | `TRUE`, `FALSE`, `NONE`                    | `True`, `False`, `None`         |
+# | `AND`, `OR`, `NOT`                         | `and`, `or`, `not`              |
+# | `EQ NE LT GT LE GE`                        | `== != < > <= >=`               |
+# | `PLUS MINUS STAR SLASH FLOORDIV MOD POW`   | `+ - * / // % **`               |
+# | `ASSIGN`, `LPAREN`, `RPAREN`, `COMMA`      | `=`, `(`, `)`, `,`              |
+# | `NEWLINE`                                  | fim de cada linha com código    |
+# | `INDENT`, `DEDENT`                         | indentação aumentou / diminuiu  |
+# | `EOF`                                      | fim do arquivo                  |
